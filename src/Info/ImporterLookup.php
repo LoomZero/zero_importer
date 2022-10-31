@@ -1,0 +1,107 @@
+<?php
+
+namespace Drupal\zero_importer\Info;
+
+use Drupal;
+use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Exception\NoHandlerException;
+use Drupal\zero_importer\Exception\NoPlaceholderException;
+use Drupal\zero_util\Data\DataArray;
+use stdClass;
+
+class ImporterLookup {
+
+  private ZeroImporterInterface $importer;
+  private string $entity_type;
+  private ?ContentEntityStorageInterface $storage = NULL;
+  private ?ContentEntityTypeInterface $definition = NULL;
+
+  public function __construct(ZeroImporterInterface $importer, string $entity_type) {
+    $this->importer = $importer;
+    $this->entity_type = $entity_type;
+  }
+
+  public function getStorage(): EntityStorageInterface {
+    if ($this->storage === NULL) {
+      /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
+      $this->storage = Drupal::entityTypeManager()
+        ->getStorage($this->entity_type);
+    }
+    return $this->storage;
+  }
+
+  public function getEntityDefinition(): EntityTypeInterface {
+    if ($this->definition === NULL) {
+      $this->definition = Drupal::entityTypeManager()
+        ->getDefinition($this->entity_type);
+    }
+    return $this->definition;
+  }
+
+  public function loadFirst(array $props): ?ContentEntityBase {
+    $loads = $this->getStorage()->loadByProperties($props);
+    if (count($loads)) {
+      /** @noinspection PhpIncompatibleReturnTypeInspection */
+      return array_shift($loads);
+    } else {
+      return NULL;
+    }
+  }
+
+  public function replace($data, ImporterEntry $entry = NULL, array $context = NULL, bool $replaceUnknown = TRUE) {
+    if ($context === NULL) {
+      $context = [
+        'data' => &$data,
+        'entry' => $entry,
+        'path' => [],
+      ];
+    }
+    if (is_array($data)) {
+      $new_data = [];
+      $path = $context['path'];
+      foreach ($data as $key => $value) {
+        $key = $this->doReplace($key, $entry, ['context' => $context, 'key' => $key, 'value' => $value, 'is_key' => TRUE], $replaceUnknown);
+        if (is_array($value)) {
+          $context['path'] = [...$path, $key];
+          $value = $this->replace($value, $entry, $context, $replaceUnknown);
+        } else if (is_string($value)) {
+          $value = $this->doReplace($value, $entry, ['context' => $context, 'key' => $key, 'value' => $value, 'is_key' => FALSE], $replaceUnknown);
+        }
+        $new_data[$key] = $value;
+      }
+      return $new_data;
+    } else if (is_string($data)) {
+      $data = $this->doReplace($data, $entry, ['context' => $context, 'key' => NULL, 'value' => $data, 'is_key' => FALSE], $replaceUnknown);
+    }
+    return $data;
+  }
+
+  public function doReplace(string $value, ?ImporterEntry $entry, array $context, bool $replaceUnknown = TRUE): string {
+    return DataArray::replace($value, function(string $value, string $match, string $root) use ($entry, $context) {
+      $parts = explode('.', $match);
+      if (str_starts_with($parts[0], '_')) {
+        return $this->doReplaceMatch(['placeholder.' . $parts[0], 'placeholder'], $entry, $value, $root, $match, $context);
+      } else {
+        return $this->doReplaceMatch(['placeholder'], $entry, $value, $root, $match, $context);
+      }
+    }, $replaceUnknown);
+  }
+
+  public function doReplaceMatch(array $handlers, ?ImporterEntry $entry, $value, $root, $match, array $context) {
+    foreach ($handlers as $handler) {
+      try {
+        if ($this->importer->hasHandler($handler)) {
+          return $this->importer->doHandler($handler, $match, $context) ?? NULL;
+        }
+      } catch (NoPlaceholderException|NoHandlerException $e) {}
+    }
+    return $entry?->get($match);
+  }
+
+}

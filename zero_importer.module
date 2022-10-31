@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * Implements hook_entity_presave().
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\file\FileInterface;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function zero_importer_entity_presave(EntityInterface $entity) {
+  /** @var \Drupal\zero_importer\Service\ZeroImporterManager $manager */
+  $manager = Drupal::service('zero_importer.manager');
+  if (!$manager->isCurrentlyPrevented('changed_date')) return;
+
+  // for files set changed to created
+  if ($entity instanceof FileInterface) {
+    $entity->changed = $entity->created;
+  } else if (!empty($entity->original) && isset($entity->original->changed)) {
+    $entity->changed = $entity->original->changed;
+  }
+}
+
+/**
+ * Implements hook_mail_alter().
+ */
+/**
+ * Implements hook_mail_alter().
+ */
+function zero_importer_mail_alter(&$message) {
+  /** @var \Drupal\zero_importer\Service\ZeroImporterManager $manager */
+  $manager = Drupal::service('zero_importer.manager');
+  if (!$manager->isCurrentlyPrevented('mail')) return;
+
+  // First: Prevent the mail from being sent.
+  $message['send'] = FALSE;
+
+  // Next: Log the mail so it can be debugged if necessary
+  Drupal::logger($manager->getCurrentImporter()->getPluginId())->notice(
+    'The following email was prevented by importer: @message',
+    ['@message' => '<pre>' . json_encode($message, JSON_PRETTY_PRINT) . '</pre>']
+  );
+}

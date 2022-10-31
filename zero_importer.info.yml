@@ -1,0 +1,9 @@
+name: ZERO Importer
+type: module
+description: "Zero Importer"
+core_version_requirement: 9.*
+package: zero
+version: 0.1.0
+
+dependencies:
+  - zero_logger

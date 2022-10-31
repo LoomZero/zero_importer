@@ -1,0 +1,5 @@
+services:
+  zero_importer.commands:
+    class: \Drupal\zero_importer\Command\ZeroImporterCommand
+    tags:
+      - { name: drush.command }
