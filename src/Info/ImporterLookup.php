@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
 use Drupal\zero_importer\Exception\NoHandlerException;
 use Drupal\zero_importer\Exception\NoPlaceholderException;
+use Drupal\zero_importer\Helper\ImporterHelper;
 use Drupal\zero_util\Data\DataArray;
 use stdClass;
 
@@ -85,7 +86,9 @@ class ImporterLookup {
   public function doReplace(string $value, ?ImporterEntry $entry, array $context, bool $replaceUnknown = TRUE): string {
     return DataArray::replace($value, function(string $value, string $match, string $root) use ($entry, $context) {
       $parts = explode('.', $match);
-      if (str_starts_with($parts[0], '_')) {
+      if (str_starts_with($parts[0], '_self')) {
+        return $this->doSelfReplace($entry, $value, $root, $match, $context);
+      } else if (str_starts_with($parts[0], '_')) {
         return $this->doReplaceMatch(['placeholder.' . $parts[0], 'placeholder'], $entry, $value, $root, $match, $context);
       } else {
         return $this->doReplaceMatch(['placeholder'], $entry, $value, $root, $match, $context);
@@ -93,11 +96,37 @@ class ImporterLookup {
     }, $replaceUnknown);
   }
 
+  public function doSelfReplace(?ImporterEntry $entry, $value, $root, $match, array $context): string {
+    $parts = explode('.', $match);
+    array_shift($parts);
+    $type = array_shift($parts);
+
+    switch ($type) {
+      case 'annotation':
+        $value = DataArray::getNested($this->importer->annotation(), implode('.', $parts));
+        return $value ?? '';
+      case 'type':
+        return $this->getEntityDefinition()->getKey($parts[0]);
+      case 'option':
+        return DataArray::getNested($this->importer->getOptions(), implode('.', $parts));
+      case 'current':
+        $current = $this->importer->getCurrent();
+        if ($current === NULL) return '';
+        return $current->get(implode('.', $parts));
+      case 'media':
+        return match ($parts[0]) {
+          'source' => ImporterHelper::getMediaSourceField($parts[1]),
+        };
+      default:
+        return '';
+    }
+  }
+
   public function doReplaceMatch(array $handlers, ?ImporterEntry $entry, $value, $root, $match, array $context) {
     foreach ($handlers as $handler) {
       try {
         if ($this->importer->hasHandler($handler)) {
-          return $this->importer->doHandler($handler, $match, $context) ?? NULL;
+          return $this->importer->doHandler($handler, $match, $context);
         }
       } catch (NoPlaceholderException|NoHandlerException $e) {}
     }

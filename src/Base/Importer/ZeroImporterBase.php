@@ -64,29 +64,6 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
     $this->annotation = $this->getPluginDefinition();
     $this->manager = Drupal::service('zero_importer.manager');
 
-    $importer = $this;
-    $this->setHandler('placeholder._def', function($value, $context) use ($importer) {
-      $parts = explode('.', $value);
-      array_shift($parts);
-      $type = array_shift($parts);
-
-      switch ($type) {
-        case 'annotation':
-          $value = DataArray::getNested($importer->annotation(), implode('.', $parts));
-          return $value ?? throw new NoPlaceholderException();
-        case 'type':
-          return $importer->getLookup()->getEntityDefinition()->getKey($parts[0]);
-        case 'option':
-          return DataArray::getNested($importer->getOptions(), implode('.', $parts));
-        case 'current':
-          $current = $importer->getCurrent();
-          if ($current === NULL) return '';
-          return $current->get(implode('.', $parts));
-        default:
-          throw new NoPlaceholderException();
-      }
-    });
-
     $this->doInit();
   }
 
@@ -362,7 +339,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
     if (isset($this->annotation()['user']) && is_int($this->annotation()['user'])) {
       $this->log('execute.as', [
         'type' => 'note',
-        'message' => 'Execute importer as user "{{ _def.annotation.user }}"',
+        'message' => 'Execute importer as user "{{ _self.annotation.user }}"',
       ]);
       $user = User::load($this->annotation()['user']);
       user_login_finalize($user);

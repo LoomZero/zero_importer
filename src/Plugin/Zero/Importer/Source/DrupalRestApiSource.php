@@ -24,13 +24,20 @@ class DrupalRestApiSource extends ZeroImporterRemoteSourceBase {
       $lookup = $importer->getLookup($entity_type);
 
       if (count($bundles) === 1) {
-        $props['{{ _def.type.bundle }}'] = reset($bundles);
+        $props['{{ _self.type.bundle }}'] = reset($bundles);
       }
 
-      $target = $lookup->loadFirst($lookup->replace($props));
-      if ($target !== NULL) {
-        $entity->set($field, ['target_id' => $target->id()]);
+      $values = $entry->get($field);
+      $references = [];
+      foreach ($values as $value) {
+        $target = $lookup->loadFirst($lookup->replace($props, $importer->createEntry($value)));
+        if ($target !== NULL) {
+          $references[] = [
+            'target_id' => $target->id(),
+          ];
+        }
       }
+      $entity->set($field, $references);
     };
   }
 

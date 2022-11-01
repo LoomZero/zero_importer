@@ -14,6 +14,7 @@ use Drupal\zero_importer\Exception\ImporterRemoteException;
 use Drupal\zero_importer\Exception\ImporterRemoteThrowable;
 use Drupal\zero_importer\Info\ImporterEntry;
 use Drupal\zero_importer\Info\ImporterLookup;
+use Drupal\zero_util\Helper\FileHelper;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -86,8 +87,8 @@ class ImporterHelper {
 
   public static function createEntity(ZeroImporterInterface $importer, string $entity_type, array $props = [], array $data = []): EntityInterface {
     $lookup = $importer->getLookup($entity_type);
-    if (!isset($props['{{ _def.type.bundle }}']) && !isset($props[$lookup->getEntityDefinition()->getKey('bundle')])) {
-      throw new ImporterException('Please give a {{ _def.type.bundle }} or the bundle direct item to determine the bundle for creation.');
+    if (!isset($props['{{ _self.type.bundle }}']) && !isset($props[$lookup->getEntityDefinition()->getKey('bundle')])) {
+      throw new ImporterException('Please give a {{ _self.type.bundle }} or the bundle direct item to determine the bundle for creation.');
     }
     $props = $lookup->replace($props, $importer->createEntry($data));
     $entity = $lookup->loadFirst($props);
@@ -139,6 +140,11 @@ class ImporterHelper {
   public static function createMedia(ZeroImporterInterface $importer, ImporterEntry $entry, array $props, string $url, array $options = []): ?MediaInterface {
     $lookup = $importer->getLookup('media');
     $props = $lookup->replace($props, $entry);
+
+    /** @var MediaInterface $media */
+    $media = $lookup->loadFirst($props);
+    if ($media !== NULL) return $media;
+
     $url = $lookup->replace($url, $entry);
     $options = $lookup->replace($options, $entry);
     $file = self::createFile($importer, $url, $options);
@@ -146,27 +152,9 @@ class ImporterHelper {
 
     /** @var MediaInterface $media */
     $media = self::createEntity($importer, 'media', $props);
-    $media->set(self::getMediaSourceField($media), $file);
+    $media->set(FileHelper::getMediaSourceField($media), $file);
     $media->save();
     return $media;
-  }
-
-  /**
-   * @param string|EntityInterface $bundle
-   *
-   * @return string
-   */
-  public static function getMediaSourceField($bundle): string {
-    if ($bundle instanceof MediaInterface) {
-      $source = $bundle->getSource();
-    } else if ($bundle instanceof MediaTypeInterface) {
-      $source = $bundle->getSource();
-    } else {
-      $mediaType = Drupal::entityTypeManager()->getStorage('media_type')->load($bundle);
-      $source = $mediaType->getSource();
-    }
-
-    return $source->getConfiguration()['source_field'];
   }
 
 }
