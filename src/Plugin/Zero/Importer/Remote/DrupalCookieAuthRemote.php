@@ -25,6 +25,7 @@ class DrupalCookieAuthRemote extends DefaultImporterRemote {
 
   protected string $state = self::STATE_LOGOUT;
   protected ?array $login = NULL;
+  protected bool $logined = FALSE;
 
   public function getState() {
     if ($this->option('share')) {
@@ -68,8 +69,10 @@ class DrupalCookieAuthRemote extends DefaultImporterRemote {
   }
 
   public function request(Uri|string $path = NULL, array $options = [], string $method = 'get'): ResponseInterface {
-    if ($this->getState() === self::STATE_LOGOUT) {
-      $this->setState(self::STATE_PENDING);
+    $state = $this->getState();
+    if ($state === self::STATE_LOGOUT || $state === self::STATE_LOGIN && !$this->logined) {
+      $this->logined = TRUE;
+      if ($state === self::STATE_LOGOUT) $this->setState(self::STATE_PENDING);
       $login = $this->getLoginData();
       $this->client = new Client($this->getURIOptions([
         'timeout' => 60,
