@@ -27,6 +27,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
   use ImporterPluginOptionsTrait;
   use ImporterPluginLoggerTrait;
 
+  protected ?ZeroImporterInterface $parent = NULL;
   protected array $annotation = [];
   protected ?ZeroImporterRemoteInterface $remote = NULL;
   /** @var ImporterLookup[] */
@@ -73,6 +74,23 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
       $action->consume('init', $info);
     }
     $this->setAnnotation($info['annotation']);
+  }
+
+  public function getParent(): ?ZeroImporterInterface {
+    return $this->parent;
+  }
+
+  public function setParent(ZeroImporterInterface $parent): self {
+    $this->parent = $parent;
+    return $this;
+  }
+
+  public function getRoot(): ZeroImporterInterface {
+    if ($this->parent !== NULL) {
+      return $this->parent->getRoot();
+    } else {
+      return $this;
+    }
   }
 
   public function isPrevented(string $key): bool {
@@ -452,7 +470,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
 
   /**
    * Get the index.
-   * Change this method only when you want to handle index for importChild different.
+   * Change this method only when you want to handle index for importChildren different.
    *
    * @return array|ImporterEntry[]
    */
@@ -554,6 +572,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
     $manager = Drupal::service('zero_importer.manager');
 
     $importer = $manager->getImporter($importer_id);
+    $importer->setParent($this);
 
     if ($extend['logger']) {
       $importer->setLogger($this->logger()->createChild($options['ident'] ?? $importer_id));

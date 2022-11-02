@@ -16,6 +16,12 @@ use Drupal\zero_logger\Base\ZeroLoggerHandlingInterface;
 
 interface ZeroImporterInterface extends PluginInspectionInterface, ZeroLoggerHandlingInterface, ImporterPluginOptionsInterface, ImporterPluginLoggerInterface {
 
+  public function getParent(): ?ZeroImporterInterface;
+
+  public function setParent(ZeroImporterInterface $parent): self;
+
+  public function getRoot(): ZeroImporterInterface;
+
   public function isPrevented(string $key): bool;
 
   public function getCurrent(): ?ImporterEntry;
