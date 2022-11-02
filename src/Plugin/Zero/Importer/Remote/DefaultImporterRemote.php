@@ -92,8 +92,14 @@ class DefaultImporterRemote extends ZeroImporterRemoteBase {
   }
 
   public function getJSON(string|Uri $path = NULL, array $options = [], string $method = 'get') {
-    $content = $this->request($path, $options, $method)->getBody()->getContents();
-    return json_decode($content, TRUE);
+    $response = $this->request($path, $options, $method);
+
+    if ($response->getStatusCode() !== 200) {
+      throw new ImporterRemoteException('Invalid response status code: ' . $response->getStatusCode());
+    } else if (!in_array('application/json', $response->getHeader('Content-Type'))) {
+      throw new ImporterRemoteException('Invalid response header Content-Type: ' . implode(', ', $response->getHeader('Content-Type')));
+    }
+    return json_decode($response->getBody()->getContents(), TRUE);
   }
 
 }

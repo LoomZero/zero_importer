@@ -21,8 +21,25 @@ class DrupalCookieAuthRemote extends DefaultImporterRemote {
   public const STATE_PENDING = 'pending';
   public const STATE_LOGIN = 'login';
 
-  private string $state = self::STATE_LOGOUT;
-  private ?array $login = NULL;
+  protected static ?array $share_login = NULL;
+
+  protected string $state = self::STATE_LOGOUT;
+  protected ?array $login = NULL;
+
+  public function getState() {
+    if ($this->option('share')) {
+      return self::$share_login['state'] ?? self::STATE_LOGOUT;
+    }
+    return $this->state;
+  }
+
+  public function setState(string $state) {
+    if ($this->option('share')) {
+      self::$share_login['state'] = $state;
+    } else {
+      $this->state = $state;
+    }
+  }
 
   public function setOptions(array $options = []): self {
     $options = array_replace_recursive([
@@ -51,8 +68,8 @@ class DrupalCookieAuthRemote extends DefaultImporterRemote {
   }
 
   public function request(Uri|string $path = NULL, array $options = [], string $method = 'get'): ResponseInterface {
-    if ($this->state === self::STATE_LOGOUT) {
-      $this->state = self::STATE_PENDING;
+    if ($this->getState() === self::STATE_LOGOUT) {
+      $this->setState(self::STATE_PENDING);
       $login = $this->getLoginData();
       $this->client = new Client($this->getURIOptions([
         'timeout' => 60,
@@ -74,11 +91,19 @@ class DrupalCookieAuthRemote extends DefaultImporterRemote {
    * ]
    */
   public function getLoginData(): array {
-    if ($this->login === NULL) {
-      $this->login = $this->doLogin();
-      $this->state = self::STATE_LOGIN;
+    if ($this->option('share')) {
+      if (!isset(self::$share_login['data'])) {
+        self::$share_login['data'] = $this->doLogin();
+        $this->setState(self::STATE_LOGIN);
+      }
+      return self::$share_login['data'];
+    } else {
+      if ($this->login === NULL) {
+        $this->login = $this->doLogin();
+        $this->setState(self::STATE_LOGIN);
+      }
+      return $this->login;
     }
-    return $this->login;
   }
 
   protected function doLogin(): array {

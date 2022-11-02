@@ -15,7 +15,6 @@ use Drupal\zero_importer\Exception\ImporterCycleReferenceException;
 use Drupal\zero_importer\Exception\ImporterEntryException;
 use Drupal\zero_importer\Exception\ImporterException;
 use Drupal\zero_importer\Exception\NoHandlerException;
-use Drupal\zero_importer\Exception\NoPlaceholderException;
 use Drupal\zero_importer\Info\ImporterEntry;
 use Drupal\zero_importer\Info\ImporterLookup;
 use Drupal\zero_importer\Info\ImporterResult;
@@ -529,7 +528,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
    * @param bool|array $extend = [
    *     'logger' => TRUE,
    *     'options' => TRUE,
-   *     'remote' => TRUE,
+   *     'remote' => FALSE,
    *     'source' => FALSE,
    * ]
    *
@@ -540,14 +539,14 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
       $extend = [
         'logger' => TRUE,
         'options' => TRUE,
-        'remote' => TRUE,
+        'remote' => FALSE,
         'source' => FALSE,
       ];
     } else {
       $extend = array_merge([
         'logger' => TRUE,
         'options' => TRUE,
-        'remote' => TRUE,
+        'remote' => FALSE,
         'source' => FALSE,
       ], $extend);
     }

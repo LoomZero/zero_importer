@@ -6,15 +6,13 @@ use Drupal;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
 use Drupal\zero_importer\Exception\NoHandlerException;
 use Drupal\zero_importer\Exception\NoPlaceholderException;
-use Drupal\zero_importer\Helper\ImporterHelper;
 use Drupal\zero_util\Data\DataArray;
-use stdClass;
+use Drupal\zero_util\Helper\FileHelper;
 
 class ImporterLookup {
 
@@ -55,7 +53,8 @@ class ImporterLookup {
     }
   }
 
-  public function replace($data, ImporterEntry $entry = NULL, array $context = NULL, bool $replaceUnknown = TRUE) {
+  public function replace($data, array|ImporterEntry $entry = NULL, array $context = NULL, bool $replaceUnknown = TRUE) {
+    if (is_array($entry)) $entry = $this->importer->createEntry($entry);
     if ($context === NULL) {
       $context = [
         'data' => &$data,
@@ -115,7 +114,7 @@ class ImporterLookup {
         return $current->get(implode('.', $parts));
       case 'media':
         return match ($parts[0]) {
-          'source' => ImporterHelper::getMediaSourceField($parts[1]),
+          'source' => FileHelper::getMediaSourceField($parts[1]),
         };
       default:
         return '';
