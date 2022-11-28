@@ -235,6 +235,32 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
    */
   public function handleError(ImporterException $exception) {
     $exception->onHandle($this);
+    $error = $exception;
+    while (($previous = $error->getPrevious()) !== NULL) {
+      $error = $previous;
+    }
+    $this->logger()->error([
+      $error->getMessage(),
+      ...array_map(function($trace) {
+        $args = [];
+        foreach ($trace['args'] ?? [] as $arg) {
+          if (is_scalar($arg)) {
+            if (is_string($arg)) {
+              $args[] = 'string(' . strlen($arg) . ')';
+            } else if (is_bool($arg)) {
+              $args[] = $arg ? 'TRUE' : 'FALSE';
+            } else {
+              $args[] = $arg;
+            }
+          } else if (is_array($arg)) {
+            $args[] = 'array(' . count($arg) . ')';
+          } else {
+            $args[] = get_class($arg);
+          }
+        }
+        return ($trace['file'] ?? '<file>') . ':' . ($trace['line'] ?? '<line>') . ' ' . ($trace['class'] ?? '<class>') . ($trace['type'] ?? '<type>') . ($trace['function'] ?? '<function>') . '(' . implode(', ', $args) . ')';
+      }, $error->getTrace()),
+    ]);
     if (!$exception instanceof ImporterEntryException) {
       throw $exception;
     }

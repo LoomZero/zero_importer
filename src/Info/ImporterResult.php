@@ -5,6 +5,7 @@ namespace Drupal\zero_importer\Info;
 use Drupal;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\RevisionableInterface;
 
 class ImporterResult {
 
@@ -20,13 +21,14 @@ class ImporterResult {
     return $this->storages[$entity_type];
   }
 
-  public function addItem($entity_type, $id, array $data = []): self {
-    if (isset($this->items[$entity_type . ':' . $id])) {
-      $this->items[$entity_type . ':' . $id]['data'] += $data;
+  public function addItem($entity_type, $id, $revision_id = NULL, array $data = []): self {
+    if (isset($this->items[$entity_type . ':' . $id . ':' . $revision_id])) {
+      $this->items[$entity_type . ':' . $id . ':' . $revision_id]['data'] += $data;
     } else {
-      $this->items[$entity_type . ':' . $id] = [
+      $this->items[$entity_type . ':' . $id . ':' . $revision_id] = [
         'entity_type' => $entity_type,
         'id' => $id,
+        'revision_id' => $revision_id,
         'data' => $data,
       ];
     }
@@ -34,7 +36,7 @@ class ImporterResult {
   }
 
   public function addEntity(EntityInterface $entity, array $data = []): self {
-    return $this->addItem($entity->getEntityTypeId(), $entity->id(), $data);
+    return $this->addItem($entity->getEntityTypeId(), $entity->id(), $entity instanceof RevisionableInterface ? $entity->getRevisionId() : NULL, $data);
   }
 
   public function removeItem($entity_type, $id): self {
@@ -83,9 +85,62 @@ class ImporterResult {
     return $mapped;
   }
 
+  /**
+   * Get the ids of the result as array
+   *
+   * @param string|NULL $entity_type
+   *
+   * @return int[]
+   */
   public function ids(string $entity_type = NULL): array {
     return $this->mapFilter(function($item) use ($entity_type) {
       if ($entity_type === NULL || $item['entity_type'] === $entity_type) return $item['id'];
+      return NULL;
+    });
+  }
+
+  /**
+   * Get the ids of the result as target array
+   *
+   * @param string|NULL $entity_type
+   *
+   * @return array = [
+   *     0 => [
+   *       'target_id' => 5,
+   *     ],
+   * ]
+   */
+  public function targetIDs(string $entity_type = NULL): array {
+    return $this->mapFilter(function($item) use ($entity_type) {
+      if ($entity_type === NULL || $item['entity_type'] === $entity_type) {
+        return [
+          'target_id' => $item['id'],
+        ];
+      }
+      return NULL;
+    });
+  }
+
+  /**
+   * Get the ids of the result as revisionable target array
+   *
+   * @param string|NULL $entity_type
+   *
+   * @return array = [
+   *     0 => [
+   *       'target_id' => 5,
+   *       'target_revision_id' => 8,
+   *     ],
+   * ]
+   */
+  public function targetRevisions(string $entity_type = NULL): array {
+    return $this->mapFilter(function ($item) use ($entity_type) {
+      if (isset($item['revision_id']) && ($entity_type === NULL || $item['entity_type'] === $entity_type)) {
+        return [
+          'target_id' => $item['id'],
+          'target_revision_id' => $item['revision_id'],
+        ];
+      }
       return NULL;
     });
   }
