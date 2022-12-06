@@ -11,6 +11,7 @@ use Drupal\zero_importer\Base\ImporterPluginLoggerTrait;
 use Drupal\zero_importer\Base\ImporterPluginOptionsTrait;
 use Drupal\zero_importer\Base\Remote\ZeroImporterRemoteInterface;
 use Drupal\zero_importer\Base\Source\ZeroImporterSourceInterface;
+use Drupal\zero_importer\Command\ZeroImporterCommand;
 use Drupal\zero_importer\Exception\ImporterCycleReferenceException;
 use Drupal\zero_importer\Exception\ImporterEntryException;
 use Drupal\zero_importer\Exception\ImporterException;
@@ -21,6 +22,7 @@ use Drupal\zero_importer\Info\ImporterResult;
 use Drupal\zero_importer\Service\ZeroImporterManager;
 use Drupal\zero_logger\Handler\ZeroLoggerHandler;
 use Drupal\zero_util\Data\DataArray;
+use Drush\Commands\DrushCommands;
 use Throwable;
 
 abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterface {
@@ -40,6 +42,7 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
   protected array $actions = [];
   protected ?ZeroLoggerHandler $logger = NULL;
   protected ZeroImporterManager $manager;
+  protected ?ZeroImporterCommand $commandContext = NULL;
 
   public static array $registry = [];
 
@@ -74,6 +77,15 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
       $action->consume('init', $info);
     }
     $this->setAnnotation($info['annotation']);
+  }
+
+  public function setCommandContext(ZeroImporterCommand $command): ZeroImporterInterface {
+    $this->commandContext = $command;
+    return $this;
+  }
+
+  public function getCommandContext(): ?ZeroImporterCommand {
+    return $this->commandContext;
   }
 
   public function getParent(): ?ZeroImporterInterface {
@@ -224,6 +236,18 @@ abstract class ZeroImporterBase extends PluginBase implements ZeroImporterInterf
     } catch (Throwable $e) {
       $this->handleError(new ImporterException($e->getMessage(), $e->getCode(), $e));
     }
+  }
+
+  public function doExecuteClear(array $options = []) {
+    try {
+      $this->executeClear($options);
+    } catch (Throwable $e) {
+      $this->handleError(new ImporterException($e->getMessage(), $e->getCode(), $e));
+    }
+  }
+
+  public function executeClear(array $options = []) {
+    throw new ImporterException('The executeClear() method must be explicit defined by importer.');
   }
 
   /**

@@ -9,12 +9,17 @@ use Drupal\zero_importer\Base\ImporterPluginLoggerInterface;
 use Drupal\zero_importer\Base\ImporterPluginOptionsInterface;
 use Drupal\zero_importer\Base\Remote\ZeroImporterRemoteInterface;
 use Drupal\zero_importer\Base\Source\ZeroImporterSourceInterface;
+use Drupal\zero_importer\Command\ZeroImporterCommand;
 use Drupal\zero_importer\Info\ImporterEntry;
 use Drupal\zero_importer\Info\ImporterLookup;
 use Drupal\zero_importer\Info\ImporterResult;
 use Drupal\zero_logger\Base\ZeroLoggerHandlingInterface;
 
 interface ZeroImporterInterface extends PluginInspectionInterface, ZeroLoggerHandlingInterface, ImporterPluginOptionsInterface, ImporterPluginLoggerInterface {
+
+  public function setCommandContext(ZeroImporterCommand $command): self;
+
+  public function getCommandContext(): ?ZeroImporterCommand;
 
   public function getParent(): ?ZeroImporterInterface;
 
@@ -29,6 +34,8 @@ interface ZeroImporterInterface extends PluginInspectionInterface, ZeroLoggerHan
   public function createEntry(array|ImporterEntry $data): ImporterEntry;
 
   public function execute(array $options = []);
+
+  public function doExecuteClear(array $options = []);
 
   public function annotation(): array;
 
