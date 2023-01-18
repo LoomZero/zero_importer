@@ -48,6 +48,10 @@ class ImporterUnpublishAction extends ZeroImporterActionBase {
       $this->log('status', [
         'type' => 'note',
         'message' => '[AFTER] Unpublish {{ count }} content: {{ ids }}',
+        'placeholders' => [
+          'count' => count($ids),
+          'ids' => $ids,
+        ],
       ]);
     } else {
       $this->log('nothing', [
