@@ -2,11 +2,11 @@
 
 namespace Drupal\zero_importer\Exception;
 
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 
 class ImporterCycleReferenceException extends ImporterSkipException {
 
-  public function onHandle(ZeroImporterInterface $importer) {
+  public function onHandle(ZImporterInterface $importer) {
     parent::onHandle($importer);
     $importer->logger()->log($this->getMessage());
   }

@@ -8,7 +8,7 @@ use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Exception\NoHandlerException;
 use Drupal\zero_importer\Exception\NoPlaceholderException;
 use Drupal\zero_util\Data\DataArray;
@@ -16,12 +16,12 @@ use Drupal\zero_util\Helper\FileHelper;
 
 class ImporterLookup {
 
-  private ZeroImporterInterface $importer;
+  private ZImporterInterface $importer;
   private string $entity_type;
   private ?ContentEntityStorageInterface $storage = NULL;
   private ?ContentEntityTypeInterface $definition = NULL;
 
-  public function __construct(ZeroImporterInterface $importer, string $entity_type) {
+  public function __construct(ZImporterInterface $importer, string $entity_type) {
     $this->importer = $importer;
     $this->entity_type = $entity_type;
   }

@@ -7,7 +7,7 @@ use Drupal\Component\Annotation\Plugin;
 /**
  * @Annotation
  */
-class ZeroImporterSource extends Plugin {
+class ZImporterSource extends Plugin {
 
   /** @var string */
   public $id;

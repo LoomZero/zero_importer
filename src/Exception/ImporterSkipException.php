@@ -2,11 +2,11 @@
 
 namespace Drupal\zero_importer\Exception;
 
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 
 class ImporterSkipException extends ImporterEntryException {
 
-  public function onHandle(ZeroImporterInterface $importer) {
+  public function onHandle(ZImporterInterface $importer) {
     if ($this->entity !== NULL) {
       $importer->result()->addEntity($this->entity, ['skip' => TRUE]);
     }

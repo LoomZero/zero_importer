@@ -5,7 +5,7 @@ namespace Drupal\zero_importer\Plugin\Zero\Importer\Action;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\zero_importer\Annotation\ZeroImporterAction;
 use Drupal\zero_importer\Base\Action\ZeroImporterActionBase;
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Helper\ImporterHelper;
 use Drupal\zero_importer\Info\ImporterEntry;
 
@@ -35,7 +35,7 @@ class ImporterFieldsMapperAction extends ZeroImporterActionBase {
       }
       $handlers[] = 'mapping.type.' . $type;
 
-      $this->importer()->execHandler($handlers, function(ZeroImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) {
+      $this->importer()->execHandler($handlers, function(ZImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) {
         $value = $entry->get($field);
         if (!empty($value)) {
           $entity->set($field, $value);

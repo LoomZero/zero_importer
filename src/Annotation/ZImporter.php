@@ -10,9 +10,12 @@ use Drupal\Component\Annotation\Plugin;
  *
  * @Annotation
  */
-class ZeroImporter extends Plugin {
+class ZImporter extends Plugin {
 
   /** @var string */
   public $id;
+
+  /** @var array */
+  public $args;
 
 }

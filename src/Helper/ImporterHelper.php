@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\file\FileInterface;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaTypeInterface;
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Exception\ImporterException;
 use Drupal\zero_importer\Exception\ImporterRemoteException;
 use Drupal\zero_importer\Exception\ImporterRemoteThrowable;
@@ -85,7 +85,7 @@ class ImporterHelper {
     return array_unique($fields);
   }
 
-  public static function createEntity(ZeroImporterInterface $importer, string $entity_type, array $props = [], array $data = []): EntityInterface {
+  public static function createEntity(ZImporterInterface $importer, string $entity_type, array $props = [], array $data = []): EntityInterface {
     $lookup = $importer->getLookup($entity_type);
     if (!isset($props['{{ _self.type.bundle }}']) && !isset($props[$lookup->getEntityDefinition()->getKey('bundle')])) {
       throw new ImporterException('Please give a {{ _self.type.bundle }} or the bundle direct item to determine the bundle for creation.');
@@ -103,7 +103,7 @@ class ImporterHelper {
   }
 
   /**
-   * @param ZeroImporterInterface $importer
+   * @param ZImporterInterface $importer
    * @param string $url
    * @param array $options = [
    *     'path' => 'public://importer/',
@@ -113,7 +113,7 @@ class ImporterHelper {
    *
    * @return FileInterface|null
    */
-  public static function createFile(ZeroImporterInterface $importer, string $url, array $options = []): ?FileInterface {
+  public static function createFile(ZImporterInterface $importer, string $url, array $options = []): ?FileInterface {
     $options = array_merge([
       'path' => 'public://importer/',
       'remote' => [],
@@ -137,7 +137,7 @@ class ImporterHelper {
     return $fileRepository->writeData($response->getBody()->getContents(), $destination, $fs::EXISTS_REPLACE);
   }
 
-  public static function createMedia(ZeroImporterInterface $importer, ImporterEntry $entry, array $props, string $url, array $options = []): ?MediaInterface {
+  public static function createMedia(ZImporterInterface $importer, ImporterEntry $entry, array $props, string $url, array $options = []): ?MediaInterface {
     $lookup = $importer->getLookup('media');
     $props = $lookup->replace($props, $entry);
 

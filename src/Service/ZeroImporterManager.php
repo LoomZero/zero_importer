@@ -4,7 +4,7 @@ namespace Drupal\zero_importer\Service;
 
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\zero_importer\Base\Action\ZeroImporterActionInterface;
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Base\Remote\ZeroImporterRemoteInterface;
 use Drupal\zero_importer\Base\Source\ZeroImporterSourceInterface;
 use Drupal\zero_importer\Exception\ImporterException;
@@ -13,7 +13,7 @@ class ZeroImporterManager {
 
   private ZeroImporterPluginManager $importer;
   private ZeroImporterSourcePluginManager $source;
-  private ?ZeroImporterInterface $current = NULL;
+  private ?ZImporterInterface $current = NULL;
 
   public function __construct(ZeroImporterPluginManager $importer, ZeroImporterSourcePluginManager $source, ZeroImporterActionPluginManager $action, ZeroImporterRemotePluginManager $remote) {
     $this->importer = $importer;
@@ -35,9 +35,9 @@ class ZeroImporterManager {
    * @param string $id
    * @param array $override_definition
    *
-   * @return ZeroImporterSourceInterface|ZeroImporterInterface|ZeroImporterActionInterface|ZeroImporterRemoteInterface
+   * @return ZeroImporterSourceInterface|ZImporterInterface|ZeroImporterActionInterface|ZeroImporterRemoteInterface
    */
-  public function getPlugin(string $type, string $id, array $override_definition = []): ZeroImporterSourceInterface|ZeroImporterInterface|ZeroImporterActionInterface|ZeroImporterRemoteInterface {
+  public function getPlugin(string $type, string $id, array $override_definition = []): ZeroImporterSourceInterface|ZImporterInterface|ZeroImporterActionInterface|ZeroImporterRemoteInterface {
     $manager = $this->getPluginManager($type);
     $definition = $manager->getDefinition($id);
     foreach ($override_definition as $key => $value) {
@@ -52,7 +52,7 @@ class ZeroImporterManager {
     return $manager->getDefinition($id);
   }
 
-  public function getImporter(string $id, array $override_definition = []): ZeroImporterInterface {
+  public function getImporter(string $id, array $override_definition = []): ZImporterInterface {
     return $this->getPlugin('importer', $id, $override_definition);
   }
 
@@ -60,12 +60,12 @@ class ZeroImporterManager {
     return $this->getPlugin('source', $id, $override_definition);
   }
 
-  public function setCurrentImporter(ZeroImporterInterface $importer): self {
+  public function setCurrentImporter(ZImporterInterface $importer): self {
     $this->current = $importer;
     return $this;
   }
 
-  public function getCurrentImporter(): ?ZeroImporterInterface {
+  public function getCurrentImporter(): ?ZImporterInterface {
     return $this->current;
   }
 

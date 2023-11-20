@@ -6,7 +6,7 @@ use Drupal;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\media\Entity\Media;
 use Drupal\zero_importer\Annotation\ZeroImporterSource;
-use Drupal\zero_importer\Base\Importer\ZeroImporterInterface;
+use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Base\Source\ZeroImporterRemoteSourceBase;
 use Drupal\zero_importer\Exception\ImporterRemoteException;
 use Drupal\zero_importer\Helper\ImporterHelper;
@@ -22,7 +22,7 @@ use Drupal\zero_util\Helper\FileHelper;
 class DrupalRestApiSource extends ZeroImporterRemoteSourceBase {
 
   public static function entityReferenceLookupHandler(array $props): callable {
-    return function(ZeroImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) use ($props) {
+    return function(ZImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) use ($props) {
       $definition = $entity->get($field);
       $entity_type = $definition->getFieldDefinition()->getSetting('target_type');
       $bundles = $definition->getItemDefinition()->getSetting('handler_settings')['target_bundles'];
@@ -66,7 +66,7 @@ class DrupalRestApiSource extends ZeroImporterRemoteSourceBase {
         'placeholder' => 'public://placeholder.png',
       ],
     ], $options);
-    return function (ZeroImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) use ($options, $fs) {
+    return function (ZImporterInterface $importer, ContentEntityBase $entity, ImporterEntry $entry, string $field) use ($options, $fs) {
       $items = [];
       foreach ($entry->get($field) as $target) {
         $data = $importer->source()->getJSON('media', $target['url'], ['query' => ['_format' => 'json']]);
