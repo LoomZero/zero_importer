@@ -13,15 +13,11 @@ class ZeroImporterManager {
 
   private ZeroImporterPluginManager $importer;
   private ZeroImporterSourcePluginManager $source;
-  private ZeroImporterActionPluginManager $action;
-  private ZeroImporterRemotePluginManager $remote;
   private ?ZeroImporterInterface $current = NULL;
 
   public function __construct(ZeroImporterPluginManager $importer, ZeroImporterSourcePluginManager $source, ZeroImporterActionPluginManager $action, ZeroImporterRemotePluginManager $remote) {
     $this->importer = $importer;
     $this->source = $source;
-    $this->action = $action;
-    $this->remote = $remote;
   }
 
   public function getPluginManager(string $type): DefaultPluginManager {
@@ -30,10 +26,6 @@ class ZeroImporterManager {
         return $this->importer;
       case 'source':
         return $this->source;
-      case 'action':
-        return $this->action;
-      case 'remote':
-        return $this->remote;
     }
     throw new ImporterException('No plugin manager with this type.');
   }
@@ -68,14 +60,6 @@ class ZeroImporterManager {
     return $this->getPlugin('source', $id, $override_definition);
   }
 
-  public function getAction(string $id, array $override_definition = []): ZeroImporterActionInterface {
-    return $this->getPlugin('action', $id, $override_definition);
-  }
-
-  public function getRemote(string $id, array $override_definition = []): ZeroImporterRemoteInterface {
-    return $this->getPlugin('remote', $id, $override_definition);
-  }
-
   public function setCurrentImporter(ZeroImporterInterface $importer): self {
     $this->current = $importer;
     return $this;
@@ -83,13 +67,6 @@ class ZeroImporterManager {
 
   public function getCurrentImporter(): ?ZeroImporterInterface {
     return $this->current;
-  }
-
-  public function isCurrentlyPrevented(string $key): bool {
-    if ($this->current !== NULL) {
-      return $this->current->isPrevented($key);
-    }
-    return FALSE;
   }
 
 }
