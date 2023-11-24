@@ -1,21 +1,5 @@
 services:
 
-  zero_importer.manager:
-    class: Drupal\zero_importer\Service\ZeroImporterManager
-    arguments: ['@plugin.manager.zero_importer', '@plugin.manager.zero_importer_source', '@plugin.manager.zero_importer_action', '@plugin.manager.zero_importer_remote']
-
   plugin.manager.zero_importer:
     class: Drupal\zero_importer\Service\ZeroImporterPluginManager
-    parent: default_plugin_manager
-
-  plugin.manager.zero_importer_source:
-    class: Drupal\zero_importer\Service\ZeroImporterSourcePluginManager
-    parent: default_plugin_manager
-
-  plugin.manager.zero_importer_action:
-    class: Drupal\zero_importer\Service\ZeroImporterActionPluginManager
-    parent: default_plugin_manager
-
-  plugin.manager.zero_importer_remote:
-    class: Drupal\zero_importer\Service\ZeroImporterRemotePluginManager
     parent: default_plugin_manager
