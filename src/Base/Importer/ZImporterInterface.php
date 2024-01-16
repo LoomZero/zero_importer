@@ -3,14 +3,18 @@
 namespace Drupal\zero_importer\Base\Importer;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\zero_importer\Base\Mapper\ZImportMapperInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Base\Source\ZImporterSourceInterface;
 use Drupal\zero_importer\Info\ZImportEntity;
+use Drupal\zero_importer\Info\ZImportResult;
 
 /**
  * @template TSource of ZImporterSourceInterface
  * @template TRow of ZImportRowInterface
+ * @template TEntity of ContentEntityBase
  */
 interface ZImporterInterface extends PluginInspectionInterface {
 
@@ -26,6 +30,23 @@ interface ZImporterInterface extends PluginInspectionInterface {
    * @return TRow|null
    */
   public function getCurrentRow(): ?ZImportRowInterface;
+
+  /**
+   * @return ZImportEntity<TEntity>|null
+   */
+  public function getCurrentEntity(): ?ZImportEntity;
+
+  /**
+   * @param string|callable $bundle_definition
+   * @return $this
+   */
+  public function setBundle($bundle_definition): self;
+
+  /**
+   * @param TRow|NULL $row
+   * @return string
+   */
+  public function getBundle(ZImportRowInterface $row = NULL): string;
 
   public function doDefine();
 
@@ -67,14 +88,20 @@ interface ZImporterInterface extends PluginInspectionInterface {
    */
   public function getSource(): ?ZImporterSourceInterface;
 
+  public function setMapper(ZImportMapperInterface $mapper): self;
+
+  public function getMapper(): ?ZImportMapperInterface;
+
   /**
    * @param $data
    * @param array|NULL $context
    * @return TRow
    */
-  public function createRow($data, array $context = NULL): ZImportRowInterface;
+  public function createRow($data, array $context = []): ZImportRowInterface;
 
-  public function doExecute();
+  public function results(): ZImportResult;
+
+  public function doExecute(): self;
 
   public function doInit(): void;
 
@@ -88,27 +115,40 @@ interface ZImporterInterface extends PluginInspectionInterface {
 
   /**
    * @param TRow $row
-   * @return ZImportEntity|null
+   * @return ZImportEntity<TEntity>|null
    */
   public function doLoad(ZImportRowInterface $row): ?ZImportEntity;
 
   /**
    * @param TRow $row
-   * @return ZImportEntity
+   * @return ZImportEntity<TEntity>
    */
   public function doCreate(ZImportRowInterface $row): ZImportEntity;
 
   /**
-   * @param ZImportEntity $entity
+   * @param ZImportEntity<TEntity> $entity
    * @param TRow $row
    */
   public function doImport(ZImportEntity $entity, ZImportRowInterface $row);
 
   /**
-   * @param ZImportEntity $entity
+   * @param ZImportEntity<TEntity> $entity
    */
   public function doSave(ZImportEntity $entity);
 
+  public function doAfter(): void;
+
   public function doExit(): void;
+
+  /**
+   * @param string|callable $row_class
+   * @return ZImporterInterface
+   */
+  public function setRowClass($row_class): self;
+
+  /**
+   * @return string|callable
+   */
+  public function getRowClass();
 
 }

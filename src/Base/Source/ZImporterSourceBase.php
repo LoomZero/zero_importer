@@ -19,8 +19,7 @@ abstract class ZImporterSourceBase implements ZImporterSourceInterface {
   }
 
   public function createRow($data, array $context = []): ZImportRowInterface {
-    if ($data instanceof ZImportRowInterface) return $data;
-    return new ZImportRowBase($this, $data);
+    return $this->getImporter()->createRow($data, $context);
   }
 
   public function setImporter(ZImporterInterface $importer): self {

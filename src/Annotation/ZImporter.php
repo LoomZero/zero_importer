@@ -16,6 +16,6 @@ class ZImporter extends Plugin {
   public $id;
 
   /** @var array */
-  public $args;
+  public $cmd;
 
 }

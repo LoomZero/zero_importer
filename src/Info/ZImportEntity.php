@@ -5,21 +5,30 @@ namespace Drupal\zero_importer\Info;
 use Drupal\Core\Entity\ContentEntityBase;
 
 /**
- * @template T_Entity of ContentEntityBase
+ * @template TEntity of ContentEntityBase
  */
 class ZImportEntity {
 
   private ContentEntityBase $entity;
 
   /**
-   * @param T_Entity $entity
+   * @param TEntity $entity
+   * @return ZImportEntity<TEntity>
+   */
+  public static function create($entity): ZImportEntity {
+    if ($entity instanceof self) return $entity;
+    return new ZImportEntity($entity);
+  }
+
+  /**
+   * @param TEntity $entity
    */
   public function __construct($entity) {
     $this->entity = $entity;
   }
 
   /**
-   * @return T_Entity
+   * @return TEntity
    */
   public function entity() {
     return $this->entity;
