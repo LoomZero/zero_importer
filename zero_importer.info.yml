@@ -3,4 +3,4 @@ type: module
 description: "Zero Importer"
 core_version_requirement: ">=8"
 package: zero
-version: 1.0.1
+version: 2.0.0
