@@ -10,6 +10,7 @@ use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Base\Source\ZImporterSourceInterface;
 use Drupal\zero_importer\Info\ZImportEntity;
 use Drupal\zero_importer\Info\ZImportResult;
+use Throwable;
 
 /**
  * @template TSource of ZImporterSourceInterface
@@ -150,5 +151,9 @@ interface ZImporterInterface extends PluginInspectionInterface {
    * @return string|callable
    */
   public function getRowClass();
+
+  public function importerCatch(Throwable $e);
+
+  public function catch(Throwable $e);
 
 }

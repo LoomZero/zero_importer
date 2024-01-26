@@ -39,6 +39,12 @@ class ZImportResult {
     return $this;
   }
 
+  public function addInfo(string $key, $value): self {
+    if (empty($this->current['info'][$key]) || !is_array($this->current['info'][$key])) $this->current['info'][$key] = [];
+    $this->current['info'][$key][] = $value;
+    return $this;
+  }
+
   public function commit(): self {
     $this->current['entity_type'] = $this->getImporter()->getCurrentEntity()->entity()->getEntityTypeId();
     $this->current['id'] = $this->getImporter()->getCurrentEntity()->entity()->id();
@@ -59,6 +65,10 @@ class ZImportResult {
    */
   public function getItems(): array {
     return $this->items;
+  }
+
+  public function loadEntity($resultitem): EntityInterface {
+    return $this->getImporter()->getEntityStorage($resultitem['entity_type'])->load($resultitem['id']);
   }
 
   public function each(callable $callback): array {

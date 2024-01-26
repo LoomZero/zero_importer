@@ -9,6 +9,8 @@ use GuzzleHttp\Psr7\Uri;
 
 class D7ImportSource extends ZImporterRemoteSourceBase {
 
+  public const BATCH_ALL = 'all';
+
   protected function prepareRemoteOptions(array $options): array {
     $options = parent::prepareRemoteOptions($options);
     $options['query']['range'] = $this->options['batch_size'];
@@ -25,7 +27,15 @@ class D7ImportSource extends ZImporterRemoteSourceBase {
     if ($asBatch) {
       $options['query']['batch'] = TRUE;
     }
-    return $this->getJSON($path, $options, $method);
+    $options['query']['entity'] = $this->getImporter()->getEntityType();
+    foreach ($options['query'] as $index => $value) {
+      if ($value === NULL) {
+        $options['query'][$index] = 'null';
+      }
+    }
+    $index = $this->getJSON($path, $options, $method);
+    $index['batch'] = [$index['items']];
+    return $index;
   }
 
   public function getItem($id, string $entity_type = NULL, string|Uri $path = NULL, array $options = [], string $method = 'get') {

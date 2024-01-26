@@ -11,10 +11,12 @@ use Drupal\zero_importer\Base\Row\ZImportRowBase;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Base\Source\ZImporterSourceInterface;
 use Drupal\zero_importer\Exception\ZImportPrepareException;
+use Drupal\zero_importer\Exception\ZImportSkipException;
 use Drupal\zero_importer\Info\ZImportEntity;
 use Drupal\zero_importer\Info\ZImportPlaceholder;
 use Drupal\zero_importer\Info\ZImportResult;
 use Drupal\zero_util\Data\DataArray;
+use Throwable;
 
 /**
  * @template TSource of ZImporterSourceInterface
@@ -217,39 +219,50 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
   }
 
   public function doExecute(): self {
-    $this->doInit();
-    $index = $this->doIndex();
+    try {
+      $this->doInit();
+      $index = $this->doIndex();
 
-    if (isset($index['index'])) {
-      $a = 0;
-    }
-
-    $this->results = new ZImportResult($this);
-    $max = $this->getMaxBatchExecute();
-    $batchCount = 0;
-    foreach ($index['batch'] as $batch) {
-      foreach ($batch as $item) {
-        $this->results()->reset();
-        $this->current_index = $item;
-        $this->current_row = $this->doPrepare($item);
-        $entity = $this->doLoad($this->current_row);
-        if ($entity === NULL) {
-          $entity = $this->doCreate($this->current_row);
-        }
-        $this->current_entity = $entity;
-        $this->doImport($entity, $this->current_row);
-        $this->doSave($entity);
-        $this->results()->commit();
-
-        $this->current_index = NULL;
-        $this->current_row = NULL;
-        $this->current_entity = NULL;
+      if (isset($index['index'])) {
+        $a = 0;
       }
-      $batchCount++;
-      if ($max !== NULL && $batchCount >= $max) break;
+
+      $this->results = new ZImportResult($this);
+      $max = $this->getMaxBatchExecute();
+      $batchCount = 0;
+      foreach ($index['batch'] as $batch) {
+        foreach ($batch as $item) {
+          $this->results()->reset();
+          $this->current_index = $item;
+
+          try {
+            $this->current_row = $this->doPrepare($item);
+            $entity = $this->doLoad($this->current_row);
+            if ($entity === NULL) {
+              $entity = $this->doCreate($this->current_row);
+            }
+            $this->current_entity = $entity;
+            $this->doImport($entity, $this->current_row);
+            $this->doSave($entity);
+            $this->results()->commit();
+          } catch (Throwable $importer_exception) {
+            if (!$importer_exception instanceof ZImportSkipException) {
+              $this->importerCatch($importer_exception);
+            }
+          }
+
+          $this->current_index = NULL;
+          $this->current_row = NULL;
+          $this->current_entity = NULL;
+        }
+        $batchCount++;
+        if ($max !== NULL && $batchCount >= $max) break;
+      }
+      $this->doAfter();
+      $this->doExit();
+    } catch (Throwable $e) {
+      $this->catch($e);
     }
-    $this->doAfter();
-    $this->doExit();
     return $this;
   }
 
@@ -281,7 +294,7 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
     if ($entity === NULL) {
       $entity = $this->getMapper()?->find($row);
       if ($entity !== NULL) {
-        return ZImportEntity::create($entity);
+        return ZImportEntity::create($entity, $this);
       }
     }
     return $entity;
@@ -297,7 +310,7 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
       $entity = $this->getEntityStorage()->create([
         $this->replacer('{{ @DEF.keys._.bundle }}') => $this->getBundle($row),
       ]);
-      $entity = ZImportEntity::create($entity);
+      $entity = ZImportEntity::create($entity, $this);
     }
     if ($entity === NULL) throw new ZImportPrepareException('Could not create a new entity. Please change the load definition or overwrite the `create(ZImportRowInterface $row): ZImportEntity` method.');
     $this->getMapper()?->register($entity, $row);
@@ -320,6 +333,30 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
   }
 
   public function doAfter(): void {
+    $this->results()->each(function($item, $index, $result) {
+      $entity = NULL;
+      foreach (($item['info']['_references'] ?? []) as $reference) {
+        $storage = Drupal::entityTypeManager()->getStorage($reference['entity_type']);
+        $items = $this->createRow($reference['values'])->each(function($index, ZImportRowInterface $value) use ($reference, $storage) {
+          $findDefinition = $this->replacer($reference['findDefinition'], $value);
+          $entities = $storage->loadByProperties($findDefinition);
+          if (count($entities)) {
+            return array_shift($entities);
+          } else {
+            return NULL;
+          }
+        });
+        if (count($items)) {
+          if ($entity === NULL) {
+            $entity = $result->loadEntity($item);
+          }
+          $entity->set($reference['field'], $items);
+        }
+      }
+      if ($entity !== NULL) {
+        $entity->save();
+      }
+    });
     $this->after();
   }
 
@@ -352,7 +389,9 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
    * @param $row
    * @return TRow
    */
-  public abstract function prepare($row): ZImportRowInterface;
+  public function prepare($row): ZImportRowInterface {
+    return $this->createRow($row);
+  }
 
   /**
    * @param TRow $row
@@ -386,5 +425,13 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
   public function after(): void { }
 
   public function exit(ZImportResult $result): void { }
+
+  public function importerCatch(Throwable $e) {
+    throw $e;
+  }
+
+  public function catch(Throwable $e) {
+    throw $e;
+  }
 
 }

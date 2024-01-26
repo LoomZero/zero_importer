@@ -2,6 +2,7 @@
 
 namespace Drupal\zero_importer\Base\Source;
 
+use Drupal\zero_importer\Base\Auth\ZImportAuthInterface;
 use Drupal\zero_importer\Exception\ZImportRemoteException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Uri;
@@ -13,6 +14,7 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
   protected array $options = [
     'batch_size' => 1000,
   ];
+  protected ZImportAuthInterface $auth;
 
   public function isRemoteSource(): bool {
     return TRUE;
@@ -23,16 +25,38 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
     return $this;
   }
 
-  public function setBatchSize(int $batch_size = 1000): self {
+  public function setBatchSize($batch_size = 1000): self {
     return $this->setRemoteOption('batch_size', $batch_size);
+  }
+
+  public function getClientOptions(): array {
+    return $this->client_options;
+  }
+
+  public function setClientOptions(array $options): self {
+    $this->client = NULL;
+    $this->client_options = $options;
+    return $this;
   }
 
   protected function prepareRemoteOptions(array $options): array {
     return $options;
   }
 
+  public function setAuth(ZImportAuthInterface $auth): self {
+    $this->auth = $auth;
+    $auth->setSource($this);
+    return $this;
+  }
+
+  public function setClient(Client $client): self {
+    $this->client = $client;
+    return $this;
+  }
+
   public function getClient(): Client {
     if ($this->client === NULL) {
+      if ($this->auth) $this->auth->onInit();
       $this->client = new Client($this->client_options);
     }
     return $this->client;
@@ -53,8 +77,13 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
     return new Uri($path);
   }
 
+  public function getRequestOptions(array $options = []): array {
+    return $options;
+  }
+
   public function request(string|Uri $path = NULL, array $options = [], string $method = 'get') {
-    return $this->getClient()->request($method, $this->getURI($path), $options);
+    if ($this->auth) $this->auth->onRequest($path, $options, $method);
+    return $this->getClient()->request($method, $this->getURI($path), $this->getRequestOptions($options));
   }
 
   public function getJSON(string|Uri $path = NULL, array $options = [], string $method = 'get') {
