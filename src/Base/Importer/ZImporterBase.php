@@ -141,6 +141,15 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
     return DataArray::getNested($this->options, $key);
   }
 
+  public function setPreventOverwrite(bool $prevent_overwrite = TRUE): self {
+    $this->setOption('importer.entity.prevent_overwrite', $prevent_overwrite);
+    return $this;
+  }
+
+  public function isPreventOverwrite(): bool {
+    return $this->getOption('importer.entity.prevent_overwrite') ?? FALSE;
+  }
+
   public function setLoadDefinition(array $loadDefinition = NULL): self {
     $this->setOption('importer.load_definition', $loadDefinition);
     return $this;

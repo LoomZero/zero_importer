@@ -63,6 +63,10 @@ interface ZImporterInterface extends PluginInspectionInterface {
 
   public function getOption(string $key);
 
+  public function setPreventOverwrite(bool $prevent_overwrite = TRUE): self;
+
+  public function isPreventOverwrite(): bool;
+
   public function setLoadDefinition(array $loadDefinition = NULL): self;
 
   public function getLoadDefinition(): ?array;

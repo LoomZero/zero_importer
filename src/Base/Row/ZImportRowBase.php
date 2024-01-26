@@ -163,11 +163,16 @@ class ZImportRowBase implements ZImportRowInterface {
       'label_key' => FALSE,
       'create_entity' => FALSE,
       'id_key' => 'id',
+      'bundle' => NULL,
     ];
     $child = $this->child($entity_type, $options['bundle'] ?? NULL);
-    $child->find([
+    $findDefinition = [
       $options['source_field'] => '{{ ' . $options['id_key'] . ' }}',
-    ]);
+    ];
+    if ($options['bundle'] !== NULL) {
+      $findDefinition['{{ @DEF.keys.' . $entity_type . '.bundle }}'] = $options['bundle'];
+    }
+    $child->find($findDefinition);
     if ($options['create_entity']) {
       $child->create(function(ZImporterChild $child, $entity, ZImportRowInterface $row) use ($options) {
         $replaced = $child->replace($options, $row);

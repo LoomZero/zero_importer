@@ -35,25 +35,17 @@ class ZeroImporterCommand extends DrushCommands {
   }
 
   /**
-   * @command zero_importer:clear
+   * @command zi:clear
    * @aliases importer-clear
    * @usage drush importer-clear my_importer
    */
-  public function clear(string $importer_id, array $options = []) {
-    /** @var \Drupal\zero_importer\Service\ZeroImporterManager $manager */
-    $manager = Drupal::service('zero_importer.manager');
-
-    $importer = $manager->getImporter($importer_id);
-    $importer->setCommandContext($this);
-    $definition = $importer->annotation();
-
-    if (!empty($definition['options'])) {
-      foreach ($definition['options'] as $option => $fallback) {
-        if ($options[$option] === NULL) $options[$option] = $fallback;
+  public function clear(array $options = []) {
+    $users = Drupal::entityTypeManager()->getStorage('user')->loadMultiple();
+    foreach ($users as $user) {
+      if (!in_array($user->id(), [0, 1])) {
+        $user->delete();
       }
     }
-
-    $importer->executeClear($options);
   }
 
   /**

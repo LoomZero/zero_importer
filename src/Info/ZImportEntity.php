@@ -13,6 +13,7 @@ class ZImportEntity {
 
   private ContentEntityBase $entity;
   private ZImporterInterface $importer;
+  private bool $prevent_overwrite = FALSE;
 
   /**
    * @param TEntity $entity
@@ -29,6 +30,7 @@ class ZImportEntity {
   public function __construct($entity, ZImporterInterface $importer) {
     $this->entity = $entity;
     $this->importer = $importer;
+    $this->setPreventOverwrite($importer->isPreventOverwrite());
   }
 
   /**
@@ -43,12 +45,23 @@ class ZImportEntity {
   }
 
   public function set(string $field, mixed $value): self {
-    $this->entity()->set($field, $value);
+    if (!$this->prevent_overwrite || $this->entity()->get($field)->isEmpty()) {
+      $this->entity()->set($field, $value);
+    }
     return $this;
   }
 
   public function isNew(): bool {
     return $this->entity()->isNew();
+  }
+
+  public function isPreventOverwrite(): bool {
+    return $this->prevent_overwrite;
+  }
+
+  public function setPreventOverwrite(bool $prevent_overwrite = TRUE): self {
+    $this->prevent_overwrite = $prevent_overwrite;
+    return $this;
   }
 
   public function setAfterReferences(string $field, $values, $findDefinition): self {
