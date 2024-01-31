@@ -21,6 +21,7 @@ class ZImporterChild {
   private bool $alwaysFill = FALSE;
   private $catch = NULL;
   private $multiple = FALSE;
+  private $create_entity = FALSE;
 
   public function __construct(ZImportRowInterface $row, string $entity_type, string $entity_bundle = NULL, array $options = []) {
     $this->row = $row;
@@ -61,8 +62,9 @@ class ZImporterChild {
    *
    * @return $this
    */
-  public function create(callable $fillDefinition): self {
+  public function create(callable $fillDefinition = NULL): self {
     $this->fillDefinition = $fillDefinition;
+    $this->create_entity = TRUE;
     return $this;
   }
 
@@ -129,7 +131,7 @@ class ZImporterChild {
           $entity = array_shift($entities);
         }
 
-        if ($entity === NULL || $this->alwaysFill) {
+        if (($entity === NULL || $this->alwaysFill) && $this->create_entity) {
           if ($entity === NULL) {
             $findDefinition ??= [];
             if ($this->entityBundle !== NULL) {

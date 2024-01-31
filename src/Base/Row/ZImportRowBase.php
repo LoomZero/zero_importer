@@ -193,21 +193,6 @@ class ZImportRowBase implements ZImportRowInterface {
       'label_key' => 'name',
     ];
     return $this->toEntity('user_role', $options)->multiple();
-    /*
-    return $this->each(function($index, $value) use ($options) {
-      $child = $value->child('user_role')
-        ->find([
-          $options['source_field'] => '{{ ' . $options['id_field'] . ' }}',
-        ]);
-      if ($options['create_entity']) {
-        $child->create(function(ZImporterChild $child, RoleInterface $role, ZImportRowInterface $row) use ($options) {
-          $role->set('id', $row->raw($options['id_field']));
-          $role->set('label', $row->raw($options['label_field']));
-        });
-      }
-      return $child;
-    });
-    */
   }
 
   public function toTerms(string $category, array $options = []): ZImporterChild {
