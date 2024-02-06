@@ -6,6 +6,7 @@ use Drupal;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\ContentEntityStorageInterface;
 use Drupal\Core\Plugin\PluginBase;
+use Drupal\Core\Site\Settings;
 use Drupal\zero_importer\Base\Mapper\ZImportMapperInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowBase;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
@@ -26,6 +27,8 @@ use Throwable;
  */
 abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
 
+  private static $settings = NULL;
+
   private string $entity_type;
   private $bundle_definition;
   /** @var TSource */
@@ -42,6 +45,13 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
   private bool $is_init = FALSE;
   private ?ZImportResult $results = NULL;
 
+  public static function getSettings(string $importer, string $key = NULL) {
+    if (self::$settings === NULL) {
+      self::$settings = Settings::get('zero_importer');
+    }
+    return DataArray::getNested(self::$settings[$importer] ?? NULL, $key);
+  }
+
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->doDefine();
@@ -53,6 +63,15 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
       $this->storages[$entity_type] = Drupal::entityTypeManager()->getStorage($entity_type);
     }
     return $this->storages[$entity_type];
+  }
+
+  public function setting(string $key = NULL) {
+    return self::getSettings($this->getPluginId(), $key);
+  }
+
+  public function getEntityKey(string $key, string $entity_type = NULL): ?string {
+    if ($entity_type === NULL) $entity_type = $this->getEntityType();
+    return Drupal::entityTypeManager()->getDefinition($entity_type)->getKey($key) ?? NULL;
   }
 
   /**

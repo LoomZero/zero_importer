@@ -57,6 +57,20 @@ class ZImportRowBase implements ZImportRowInterface {
     return $this;
   }
 
+  public function first($key = NULL, $fallback = NULL, array $context = []): static {
+    $value = $this->get($key, $fallback, $context)->array();
+    if (is_array($value)) {
+      return $this->getImporter()->createRow(array_shift($value));
+    }
+    return $this->getImporter()->createRow($value);
+  }
+
+  public function multi($key = NULL, $fallback = NULL, array $context = []): static {
+    $value = $this->get($key, $fallback, $context)->value();
+    if ($value === NULL) return $this->getImporter()->createRow([]);
+    return $this->getImporter()->createRow([$value]);
+  }
+
   public function call(callable $call = NULL): static {
     if ($call === NULL) {
       return $this;
@@ -144,7 +158,7 @@ class ZImportRowBase implements ZImportRowInterface {
     $manager = Drupal::service('plugin.manager.zero_importer');
 
     $mapping = $manager->getImporter($importer)->getMapper();
-    return $mapping->find($this->map($mapper));
+    return $mapping->find($this->call($mapper));
   }
 
   public function child(string $entity_type, string $entity_bundle = NULL): ZImporterChild {

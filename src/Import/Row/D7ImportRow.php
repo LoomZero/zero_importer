@@ -52,8 +52,25 @@ class D7ImportRow extends ZImportRowBase {
     }
   }
 
-  public function textfield(int $index = NULL) {
-    return $this->attr('safe_value', $index);
+  public function textfield(int $index = NULL, array $formats = []) {
+    $values = [];
+    foreach ($this->array() as $value) {
+      $item = $value['safe_value'] ?? $value['value'] ?? NULL;
+      if ($item === NULL) continue;
+      $item = [
+        'value' => $item,
+      ];
+      $format = $formats[$value['format']] ?? NULL;
+      if ($format !== NULL) {
+        $item['format'] = $format;
+      }
+      $values[] = $item;
+    }
+    if ($index === NULL) {
+      return $values;
+    } else {
+      return $values[$index] ?? NULL;
+    }
   }
 
   public function email(int $index = NULL) {

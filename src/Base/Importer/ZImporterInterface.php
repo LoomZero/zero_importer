@@ -9,6 +9,7 @@ use Drupal\zero_importer\Base\Mapper\ZImportMapperInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Base\Source\ZImporterSourceInterface;
 use Drupal\zero_importer\Info\ZImportEntity;
+use Drupal\zero_importer\Info\ZImportPlaceholder;
 use Drupal\zero_importer\Info\ZImportResult;
 use Throwable;
 
@@ -20,6 +21,10 @@ use Throwable;
 interface ZImporterInterface extends PluginInspectionInterface {
 
   public function getEntityStorage(string $entity_type = NULL): ContentEntityStorageInterface;
+
+  public function setting(string $key = NULL);
+
+  public function getEntityKey(string $key, string $entity_type = NULL): ?string;
 
   /**
    * @param $value
@@ -70,6 +75,8 @@ interface ZImporterInterface extends PluginInspectionInterface {
   public function setLoadDefinition(array $loadDefinition = NULL): self;
 
   public function getLoadDefinition(): ?array;
+
+  public function placeholder(string $field = ''): ZImportPlaceholder;
 
   /**
    * Set the maximum execution of batch in one import call. Only if root importer. Will be overwritten by cmd option '--max-batch-execute'.

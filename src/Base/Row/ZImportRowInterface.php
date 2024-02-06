@@ -23,6 +23,10 @@ interface ZImportRowInterface {
 
   public function set($key, $value, array $context = []): self;
 
+  public function first($key = NULL, $fallback = NULL, array $context = []): static;
+
+  public function multi($key = NULL, $fallback = NULL, array $context = []): static;
+
   public function call(callable $call = NULL): static;
 
   public function map(callable $mapper = NULL): static;

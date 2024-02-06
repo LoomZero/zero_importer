@@ -11,19 +11,34 @@ class D7ImportSource extends ZImporterRemoteSourceBase {
 
   public const BATCH_ALL = 'all';
 
-  protected function prepareRemoteOptions(array $options): array {
-    $options = parent::prepareRemoteOptions($options);
-    $options['query']['range'] = $this->options['batch_size'];
-    return $options;
+  public function getRequestOptions(array $options = []): array {
+    if ($options['key'] === 'index') {
+      $options['query']['range'] = $this->options['batch_size'];
+      if (!empty($this->options['index_bundles'])) {
+        $options['query']['conditions'][] = ['[bundle]', $this->options['index_bundles'], 'IN'];
+      }
+      if (!empty($this->options['index_id'])) {
+        $options['query']['conditions'][] = ['[id]', $this->options['index_id']];
+      }
+    }
+    return parent::getRequestOptions($options);
+  }
+
+  public function setIndexBundles(array $bundles): self {
+    return $this->setRemoteOption('index_bundles', $bundles);
+  }
+
+  public function setIndexID($id): self {
+    return $this->setRemoteOption('index_id', $id);
   }
 
   public function createRow($data, array $context = []): ZImportRowInterface {
-    return new ZImportRowBase($this, $data);
+    return new ZImportRowBase($this->getImporter(), $data);
   }
 
   public function getIndex($asBatch = TRUE, string|Uri $path = NULL, array $options = [], string $method = 'get') {
     $path ??= '/api/json/zero/exporter/index';
-    $options = $this->prepareRemoteOptions($options);
+    $options['key'] = 'index';
     if ($asBatch) {
       $options['query']['batch'] = TRUE;
     }
@@ -40,11 +55,18 @@ class D7ImportSource extends ZImporterRemoteSourceBase {
 
   public function getItem($id, string $entity_type = NULL, string|Uri $path = NULL, array $options = [], string $method = 'get') {
     $path ??= '/api/json/zero/exporter/data';
-    $options = $this->prepareRemoteOptions($options);
+    $options['key'] = 'item';
     $options['query']['entity'] = $entity_type ?? $this->getImporter()->getEntityType();
     $options['query']['id'] = $id;
     $response = $this->getJSON($path, $options, $method);
     return $response['entity'];
+  }
+
+  public function getFile($id, string|Uri $path = NULL, array $options = [], string $method = 'get') {
+    $path ??= '/api/json/zero/exporter/file';
+    $options['key'] = 'file';
+    $options['query']['file'] = $id;
+    return $this->getHttp($path, $options, $method);
   }
 
 }

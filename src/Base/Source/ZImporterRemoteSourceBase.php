@@ -5,7 +5,9 @@ namespace Drupal\zero_importer\Base\Source;
 use Drupal\zero_importer\Base\Auth\ZImportAuthInterface;
 use Drupal\zero_importer\Exception\ZImportRemoteException;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Client\ClientExceptionInterface;
 
 abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
 
@@ -37,10 +39,6 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
     $this->client = NULL;
     $this->client_options = $options;
     return $this;
-  }
-
-  protected function prepareRemoteOptions(array $options): array {
-    return $options;
   }
 
   public function setAuth(ZImportAuthInterface $auth): self {
@@ -83,15 +81,26 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
 
   public function request(string|Uri $path = NULL, array $options = [], string $method = 'get') {
     if ($this->auth) $this->auth->onRequest($path, $options, $method);
-    return $this->getClient()->request($method, $this->getURI($path), $this->getRequestOptions($options));
+    try {
+      return $this->getClient()->request($method, $this->getURI($path), $this->getRequestOptions($options));
+    } catch (ClientExceptionInterface $exception) {
+      throw new ZImportRemoteException('Guzzle exception: ' . $exception->getMessage(), $exception->getCode(), $exception);
+    }
   }
 
-  public function getJSON(string|Uri $path = NULL, array $options = [], string $method = 'get') {
+  public function getHttp(string|Uri $path = NULL, array $options = [], string $method = 'get') {
     $response = $this->request($path, $options, $method);
 
     if ($response->getStatusCode() !== 200) {
       throw new ZImportRemoteException('Invalid response status code: ' . $response->getStatusCode());
-    } else if (!in_array('application/json', $response->getHeader('Content-Type'))) {
+    }
+    return $response;
+  }
+
+  public function getJSON(string|Uri $path = NULL, array $options = [], string $method = 'get') {
+    $response = $this->getHttp($path, $options, $method);
+
+    if (!in_array('application/json', $response->getHeader('Content-Type'))) {
       throw new ZImportRemoteException('Invalid response header Content-Type: ' . implode(', ', $response->getHeader('Content-Type')));
     }
     return json_decode($response->getBody()->getContents(), TRUE);

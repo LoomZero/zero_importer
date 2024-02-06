@@ -3,6 +3,7 @@
 namespace Drupal\zero_importer\Info;
 
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 
@@ -74,6 +75,29 @@ class ZImportEntity {
       'values' => $values,
       'findDefinition' => $findDefinition,
     ]);
+    return $this;
+  }
+
+  public function getFieldType(string $field): string {
+    return $this->entity()->get($field)->getFieldDefinition()->getType();
+  }
+
+  public function getFieldReferenceType(string $field): ?string {
+    return $this->entity()->get($field)->getFieldDefinition()->getSettings()['target_type'] ?? NULL;
+  }
+
+  public function getFieldListOptions(string $field): array {
+    return $this->entity()->get($field)->getFieldDefinition()->getSettings()['allowed_values'] ?? [];
+  }
+
+  public function setPublish(bool $published): self {
+    if ($this->entity() instanceof EntityPublishedInterface) {
+      if ($published) {
+        $this->entity()->setPublished();
+      } else {
+        $this->entity()->setUnpublished();
+      }
+    }
     return $this;
   }
 
