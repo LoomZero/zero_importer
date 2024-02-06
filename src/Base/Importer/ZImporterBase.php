@@ -49,7 +49,7 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
     if (self::$settings === NULL) {
       self::$settings = Settings::get('zero_importer');
     }
-    return DataArray::getNested(self::$settings[$importer] ?? NULL, $key);
+    return DataArray::getNested(self::$settings[$importer] ?? NULL, $key) ?? DataArray::getNested(self::$settings['_default'] ?? NULL, $key);
   }
 
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
