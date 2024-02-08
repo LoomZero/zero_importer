@@ -2,10 +2,11 @@
 
 namespace Drupal\zero_importer\Base\Auth;
 
+use Drupal\zero_importer\Base\Info\ZImporterInfoInterface;
 use Drupal\zero_importer\Base\Source\ZImporterRemoteSourceBase;
 use GuzzleHttp\Psr7\Uri;
 
-interface ZImportAuthInterface {
+interface ZImportAuthInterface extends ZImporterInfoInterface {
 
   public function setSource(ZImporterRemoteSourceBase $source): self;
 

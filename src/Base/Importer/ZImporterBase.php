@@ -38,9 +38,9 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
   private array $storages = [];
   private $current_index = NULL;
   /** @var TRow|NULL */
-  private ?ZImportRowInterface $current_row;
+  private ?ZImportRowInterface $current_row = NULL;
   /** @var ZImportEntity<TEntity>|NULL */
-  private ?ZImportEntity $current_entity;
+  private ?ZImportEntity $current_entity = NULL;
   private $row_class = ZImportRowBase::class;
   private bool $is_init = FALSE;
   private ?ZImportResult $results = NULL;
@@ -92,6 +92,8 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
         }
       } else if ($parts[0] === '@OPTS') {
         return $this->getOption(implode('.', array_slice($parts, 1)));
+      } else if ($parts[0] === '@SETTINGS') {
+        return $this->setting(implode('.', array_slice($parts, 1)));
       }
       return $row->replace($value, $match, $root);
     });
@@ -122,6 +124,10 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
 
   public function getEntityType(): string {
     return $this->entity_type;
+  }
+
+  public function getBundleDefinition() {
+    return $this->bundle_definition;
   }
 
   /**

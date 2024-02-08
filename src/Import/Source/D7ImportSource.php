@@ -69,4 +69,12 @@ class D7ImportSource extends ZImporterRemoteSourceBase {
     return $this->getHttp($path, $options, $method);
   }
 
+  public function info(): array {
+    $info = parent::info();
+    if (!empty($this->options['index_bundles'])) {
+      $info['Index Bundles'] = implode(', ', $this->options['index_bundles']);
+    }
+    return $info;
+  }
+
 }

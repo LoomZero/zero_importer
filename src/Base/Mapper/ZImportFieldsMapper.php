@@ -90,4 +90,12 @@ class ZImportFieldsMapper extends ZImportMapperBase {
     $entity->set($this->getSourceField(), $this->getKey($row));
   }
 
+  public function info(): array {
+    return [
+      'Source Field' => $this->getSourceField(),
+      'Keys' => implode(', ', $this->mapping),
+      'Concat' => $this->getConcat(),
+    ];
+  }
+
 }

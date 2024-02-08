@@ -4,10 +4,11 @@ namespace Drupal\zero_importer\Base\Mapper;
 
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\zero_importer\Base\Importer\ZImporterInterface;
+use Drupal\zero_importer\Base\Info\ZImporterInfoInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Info\ZImportEntity;
 
-interface ZImportMapperInterface {
+interface ZImportMapperInterface extends ZImporterInfoInterface {
 
   public function setImporter(ZImporterInterface $importer): self;
 

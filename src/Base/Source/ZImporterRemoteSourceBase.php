@@ -16,7 +16,7 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
   protected array $options = [
     'batch_size' => 1000,
   ];
-  protected ZImportAuthInterface $auth;
+  protected ?ZImportAuthInterface $auth = NULL;
 
   public function isRemoteSource(): bool {
     return TRUE;
@@ -32,7 +32,9 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
   }
 
   public function getClientOptions(): array {
-    return $this->client_options;
+    $options = $this->client_options;
+    $options['base_uri'] = $this->getBaseUrl();
+    return $options;
   }
 
   public function setClientOptions(array $options): self {
@@ -41,10 +43,14 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
     return $this;
   }
 
-  public function setAuth(ZImportAuthInterface $auth): self {
+  public function setAuth(ZImportAuthInterface $auth = NULL): self {
     $this->auth = $auth;
     $auth->setSource($this);
     return $this;
+  }
+
+  public function getAuth(): ?ZImportAuthInterface {
+    return $this->auth;
   }
 
   public function setClient(Client $client): self {
@@ -55,28 +61,37 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
   public function getClient(): Client {
     if ($this->client === NULL) {
       if ($this->auth) $this->auth->onInit();
-      $this->client = new Client($this->client_options);
+      $this->client = new Client($this->getClientOptions());
     }
     return $this->client;
   }
 
-  public function setBaseOption(string $key, $value): self {
+  public function setClientOption(string $key, $value): self {
     $this->client = NULL;
     $this->client_options[$key] = $value;
     return $this;
   }
 
-  public function setBaseUrl(string|Uri $path): self {
-    return $this->setBaseOption('base_uri', $this->getURI($path));
+  public function getClientOption(string $key) {
+    return $this->getImporter()->replacer($this->client_options[$key] ?? NULL);
   }
 
-  public function getURI(string|Uri $path): Uri {
+  public function setBaseUrl(string|Uri $path): self {
+    return $this->setClientOption('base_uri', $path);
+  }
+
+  public function getBaseUrl(): Uri {
+    return $this->getURI($this->getClientOption('base_uri'));
+  }
+
+  public function getURI(string|Uri $path = NULL): ?Uri {
+    if ($path === NULL) return NULL;
     if ($path instanceof Uri) return $path;
     return new Uri($path);
   }
 
   public function getRequestOptions(array $options = []): array {
-    return $options;
+    return $this->getImporter()->replacer($options);
   }
 
   public function request(string|Uri $path = NULL, array $options = [], string $method = 'get') {
@@ -104,6 +119,15 @@ abstract class ZImporterRemoteSourceBase extends ZImporterSourceBase {
       throw new ZImportRemoteException('Invalid response header Content-Type: ' . implode(', ', $response->getHeader('Content-Type')));
     }
     return json_decode($response->getBody()->getContents(), TRUE);
+  }
+
+  public function info(): array {
+    $info = [
+      'Base Url' => [$this->client_options['base_uri'], (string)$this->getBaseUrl()],
+      'Batch Size' => $this->options['batch_size'],
+    ];
+
+    return $info;
   }
 
 }

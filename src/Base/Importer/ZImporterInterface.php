@@ -42,6 +42,8 @@ interface ZImporterInterface extends PluginInspectionInterface {
    */
   public function getCurrentEntity(): ?ZImportEntity;
 
+  public function getBundleDefinition();
+
   /**
    * @param string|callable $bundle_definition
    * @return $this

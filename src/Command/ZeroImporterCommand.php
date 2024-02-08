@@ -4,10 +4,13 @@ namespace Drupal\zero_importer\Command;
 
 use Consolidation\AnnotatedCommand\AnnotationData;
 use Drupal;
+use Drupal\zero_importer\Base\Info\ZImporterInfoInterface;
 use Drupal\zero_importer\Service\ZeroImporterPluginManager;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputOption;
 
 class ZeroImporterCommand extends DrushCommands {
@@ -31,6 +34,59 @@ class ZeroImporterCommand extends DrushCommands {
 
     foreach ($manager->getDefinitions() as $definition) {
       $this->output()->writeln('- ' . $definition['id']);
+    }
+  }
+
+  /**
+   * @command zero_importer:info
+   * @aliases zi:info
+   * @usage drush zi:info
+   */
+  public function info(string $importer_id) {
+    /** @var ZeroImporterPluginManager $manager */
+    $manager = Drupal::service('plugin.manager.zero_importer');
+
+    $importer = $manager->getImporter($importer_id);
+    $importer->doDefine();
+    $table = new Table($this->output());
+    $table->setStyle('borderless');
+    $table->setHeaders(['Key', 'Value']);
+    $table->addRow(['ID', $importer->getPluginId()]);
+    $table->addRow(['Class', $importer::class]);
+    $table->addRow(new TableSeparator());
+    $table->addRow(['Entity Type', $importer->getEntityType()]);
+    $table->addRow(['Entity Bundle', $this->infoValue($importer->getBundleDefinition())]);
+    $table->addRow(new TableSeparator());
+    $table->addRow(['Row Class', $this->infoValue($importer->getRowClass())]);
+    $table->addRow(new TableSeparator());
+    $this->addComponentInfo($importer->getMapper(), 'Mapper', $table);
+    $table->addRow(new TableSeparator());
+    $this->addComponentInfo($importer->getSource(), 'Source', $table);
+    if (method_exists($importer->getSource(), 'getAuth')) {
+      $table->addRow(new TableSeparator());
+      $this->addComponentInfo($importer->getSource()->getAuth(), 'Auth', $table);
+    }
+    $table->render();
+  }
+
+  public function infoValue($value): string {
+    if (is_callable($value)) return 'callable';
+    if (is_object($value)) return $value::class;
+    if (is_array($value)) {
+      if ($value[0] === $value[1]) {
+        return $value[0];
+      } else {
+        return $value[0] . ' [' . $value[1] . ']';
+      }
+    }
+    return $value;
+  }
+
+  public function addComponentInfo(ZImporterInfoInterface $info, string $title, Table $table) {
+    $fields = $info->info();
+    $table->addRow([$title . ' Class', $info::class]);
+    foreach ($fields as $key => $value) {
+      $table->addRow([$title . ' ' . $key, $this->infoValue($value)]);
     }
   }
 

@@ -20,4 +20,17 @@ class D7SimpleAuth extends ZImportAuthBase {
     $options['query']['_pass'] = $this->data()['credentials']['pass'];
   }
 
+  public function info(): array {
+    $info = [
+      'User' => [$this->data()['credentials']['name'], $this->getSource()->getImporter()->replacer($this->data()['credentials']['name'])],
+    ];
+    $pass = $this->data()['credentials']['pass'];
+    if (str_starts_with($pass, '{{') && str_ends_with($pass, '}}')) {
+      $info['Pass'] = $this->data()['credentials']['pass'];
+    } else {
+      $info['Pass'] = str_repeat('*', strlen($this->data()['credentials']['pass']));
+    }
+    return $info;
+  }
+
 }
