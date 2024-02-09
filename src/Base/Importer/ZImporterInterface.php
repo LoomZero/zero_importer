@@ -147,6 +147,12 @@ interface ZImporterInterface extends PluginInspectionInterface {
 
   /**
    * @param ZImportEntity<TEntity> $entity
+   * @param TRow $row
+   */
+  public function doImported(ZImportEntity $entity, ZImportRowInterface $row);
+
+  /**
+   * @param ZImportEntity<TEntity> $entity
    */
   public function doSave(ZImportEntity $entity);
 

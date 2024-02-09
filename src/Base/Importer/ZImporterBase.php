@@ -278,6 +278,7 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
             $this->current_entity = $entity;
             $this->doImport($entity, $this->current_row);
             $this->doSave($entity);
+            $this->doImported($entity, $this->current_row);
             $this->results()->commit();
           } catch (Throwable $importer_exception) {
             if (!$importer_exception instanceof ZImportSkipException) {
@@ -357,6 +358,14 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
    */
   public function doImport(ZImportEntity $entity, ZImportRowInterface $row) {
     $this->import($entity, $row);
+  }
+
+  /**
+   * @param ZImportEntity<TEntity> $entity
+   * @param TRow $row
+   */
+  public function doImported(ZImportEntity $entity, ZImportRowInterface $row) {
+    $this->imported($entity, $row);
   }
 
   /**
@@ -448,6 +457,12 @@ abstract class ZImporterBase extends PluginBase implements ZImporterInterface {
    * @param TRow $row
    */
   public abstract function import(ZImportEntity $entity, ZImportRowInterface $row);
+
+  /**
+   * @param ZImportEntity<TEntity> $entity
+   * @param TRow $row
+   */
+  public function imported(ZImportEntity $entity, ZImportRowInterface $row) { }
 
   /**
    * @param ZImportEntity<TEntity> $entity

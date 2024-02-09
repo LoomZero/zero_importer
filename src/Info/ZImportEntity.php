@@ -2,10 +2,12 @@
 
 namespace Drupal\zero_importer\Info;
 
+use Drupal;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
+use Drupal\zero_importer\Exception\ZImportException;
 
 /**
  * @template TEntity of ContentEntityBase
@@ -97,6 +99,24 @@ class ZImportEntity {
       } else {
         $this->entity()->setUnpublished();
       }
+    }
+    return $this;
+  }
+
+  public function setAlias(string $alias): self {
+    if ($this->isNew()) throw new ZImportException('Please use "setAlias(string, bool)" only in "imported(ImportContext, EntityInterface)" state or with saved entities.');
+
+    $storage = $this->getImporter()->getEntityStorage('path_alias');
+
+    if ($this->entity()->getEntityTypeId() === 'node') {
+      $this->entity()->set('path', ['alias' => $alias]);
+      $this->entity()->save();
+    } else {
+      $path_alias = $storage->create([
+        'path' => $this->entity()->toUrl()->toString(),
+        'alias' => $alias,
+      ]);
+      $path_alias->save();
     }
     return $this;
   }
