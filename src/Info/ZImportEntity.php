@@ -121,4 +121,9 @@ class ZImportEntity {
     return $this;
   }
 
+  public function setLanguage(string $langcode): self {
+    $this->entity()->set('langcode', $langcode);
+    return $this;
+  }
+
 }
