@@ -3,11 +3,14 @@
 namespace Drupal\zero_importer\Info;
 
 use Drupal;
+use Drupal\Core\Database\Database;
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\zero_importer\Base\Importer\ZImporterInterface;
 use Drupal\zero_importer\Base\Row\ZImportRowInterface;
 use Drupal\zero_importer\Exception\ZImportException;
+use Drupal\zero_importer\Helper\ImporterHelper;
 
 /**
  * @template TEntity of ContentEntityBase
@@ -80,6 +83,39 @@ class ZImportEntity {
     return $this;
   }
 
+  public function getEntityType(): string {
+    return $this->entity()->getEntityTypeId();
+  }
+
+  public function id() {
+    return $this->entity()->id();
+  }
+
+  public function getKey(string $key) {
+    return $this->entity()->getEntityType()->getKey($key);
+  }
+
+  /**
+   * @param array $options = [
+   *     'include' = [0 => 'field_one', 1 => 'title'],
+   *     'include_pattern' = 'field_.*',
+   *     'include_type' = ['entity_reference', 'entity_reference:node',
+   *   'list_string'],
+   *     'exclude' = [0 => 'field_source_id', 1 => 'field_source_hash'],
+   *     'exclude_pattern' = 'field_source_.*',
+   *     'exclude_type' = ['entity_reference', 'entity_reference:node',
+   *   'list_string'],
+   * ]
+   * @return string[]
+   */
+  public function getFields(array $options = []): array {
+    if (empty($options)) {
+      return $this->entity()->getFields();
+    } else {
+      return ImporterHelper::getRelevantFields($this->entity(), $options);
+    }
+  }
+
   public function getFieldType(string $field): string {
     return $this->entity()->get($field)->getFieldDefinition()->getType();
   }
@@ -99,6 +135,8 @@ class ZImportEntity {
       } else {
         $this->entity()->setUnpublished();
       }
+    } else {
+      throw new ZImportException('The entity is not of type EntityPublishedInterface and can not be published.');
     }
     return $this;
   }
@@ -123,6 +161,27 @@ class ZImportEntity {
 
   public function setLanguage(string $langcode): self {
     $this->entity()->set('langcode', $langcode);
+    return $this;
+  }
+
+  public function setChanged($timestamp, string $field = 'changed'): self {
+    if ($this->entity() instanceof EntityChangedInterface) {
+      Database::getConnection()->update($this->entity()->getEntityType()->getDataTable())
+        ->fields([
+          $field => $timestamp,
+        ])
+        ->condition($this->getKey('id'), $this->id())
+        ->execute();
+      Database::getConnection()->update($this->entity()->getEntityType()->getRevisionDataTable())
+        ->fields([
+          $field => $timestamp,
+        ])
+        ->condition($this->getKey('id'), $this->id())
+        ->condition($this->getKey('revision'), $this->entity()->getRevisionId())
+        ->execute();
+    } else {
+      throw new ZImportException('The entity is not of type EntityChangedInterface and can not has a changed date.');
+    }
     return $this;
   }
 

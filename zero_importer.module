@@ -14,8 +14,6 @@ function zero_importer_entity_presave(EntityInterface $entity) {
   // for files set changed to created
   if ($entity instanceof FileInterface) {
     $entity->changed = $entity->created;
-  } else if (!empty($entity->original) && isset($entity->original->changed)) {
-    $entity->changed = $entity->original->changed;
   }
 }
 
@@ -27,5 +25,5 @@ function zero_importer_entity_presave(EntityInterface $entity) {
  */
 function zero_importer_mail_alter(&$message) {
   // First: Prevent the mail from being sent.
-  $message['send'] = FALSE;
+  // $message['send'] = FALSE;
 }
