@@ -30,7 +30,7 @@ class ImporterFieldsMapperAction extends ZeroImporterActionBase {
     foreach ($fields as $field) {
       $handlers = ['mapping.name.' . $field];
       $type = $entity->get($field)->getFieldDefinition()->getType();
-      if ($type === 'entity_reference') {
+      if ($type === 'entity_reference' || $type === 'entity_reference_revisions') {
         $handlers[] = 'mapping.type.' . $type . '.' . $entity->get($field)->getFieldDefinition()->getSettings()['target_type'];
       }
       $handlers[] = 'mapping.type.' . $type;

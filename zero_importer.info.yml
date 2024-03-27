@@ -3,7 +3,7 @@ type: module
 description: "Zero Importer"
 core_version_requirement: ">=8"
 package: zero
-version: 1.0.1
+version: 1.0.2
 
 dependencies:
   - zero_logger
